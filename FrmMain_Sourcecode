@@ -1,0 +1,132 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace UserLogin
+{
+    public partial class FrmMain : Form
+    {
+        public static FrmMain Instance;
+        static string loginUsername = FrmLogin.Instance.tbUsername.Text;
+
+        SqlConnection conn = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;Initial Catalog=RegistrationDB;Integrated Security=True");
+        string cartStartTime, cartEndTime;
+
+        public FrmMain()
+        {
+            InitializeComponent();
+            Instance = this;
+
+            dtPickerStartTime.Format = DateTimePickerFormat.Time;
+            dtPickerEndTime.Format = DateTimePickerFormat.Time;
+
+            ShowData();
+            //BindData();
+        }
+
+        private void monthCalSchedule_DateChanged(object sender, DateRangeEventArgs e)
+        {
+            txtbSchedDisplay.Text = monthCalSchedule.SelectionRange.Start.ToShortDateString();
+        }
+
+        private void dtPickerEndTime_ValueChanged(object sender, EventArgs e)
+        {
+            cartEndTime = dtPickerEndTime.Value.ToShortTimeString();
+            CartDisplayTime();
+        }
+
+        private void dtPickerStartTime_ValueChanged(object sender, EventArgs e)
+        {
+            cartStartTime = dtPickerStartTime.Value.ToShortTimeString();
+            CartDisplayTime();
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            txtbCartTimeDisplay.Clear();
+            txtbSchedDisplay.Clear();
+        }
+
+        private void btnNew_Click(object sender, EventArgs e)
+        {
+            FrmRegistration frmRegistration = new FrmRegistration();
+            frmRegistration.Show();
+
+            FrmRegistration.Instance.lblAreadyAccount.Text = "";
+            FrmRegistration.Instance.linklaAlreadyAccount.Text = "";
+        }
+
+        private void CartDisplayTime()
+        {
+            txtbCartTimeDisplay.Text = cartStartTime + " to " + cartEndTime;
+        }
+
+        private void BindData()
+        {
+            SqlCommand command = new SqlCommand("SELECT * FROM RegistrationTable", conn);
+            SqlDataAdapter adapter = new SqlDataAdapter(command);
+            DataTable dt = new DataTable();
+            adapter.Fill(dt);
+            dataGridView1.DataSource = dt;
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            conn.Open();
+            string query = "UPDATE RegistrationTable SET SchedDate = '"+Convert.ToDateTime(txtbSchedDisplay.Text)+"', SchedTimeStart = '"+ dtPickerStartTime.Value+ "', SchedTimeEnd = '"+ dtPickerEndTime.Value + "' WHERE Username = '"+loginUsername+"'";
+            SqlCommand command = new SqlCommand(query, conn);
+            command.ExecuteNonQuery();
+            conn.Close();
+            MessageBox.Show("Schedule Updated Successfully!");
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            conn.Open();
+            string query = "UPDATE RegistrationTable SET SchedDate = NULL, SchedTimeStart = NULL, SchedTimeEnd = NULL WHERE Username = '" + loginUsername + "'";
+            SqlCommand command = new SqlCommand(query, conn);
+            command.ExecuteNonQuery();
+            conn.Close();
+            MessageBox.Show("Schedule Deleted Successfully!");
+
+            txtbSchedDisplay.Clear();
+            txtbCartTimeDisplay.Clear();
+        }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {
+            FrmLogin frmLogin = new FrmLogin();
+            this.Close();
+            frmLogin.Show();
+        }
+
+        private void ShowData()
+        {
+            conn.Open();
+            //string query = "SELECT ID, FirstName, LastName, Age, HomeAddress, Email FROM RegistrationTable WHERE Username = '" + loginUsername + "'";
+            string query = "SELECT ID, FirstName, LastName, Age, HomeAddress, Email FROM RegistrationTable WHERE Username = @Username";
+            SqlCommand command = new SqlCommand(query, conn);
+            command.Parameters.AddWithValue("@Username", loginUsername);
+            SqlDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                txtbID.Text = reader.GetValue(0).ToString();
+                txtbFirstNameDisplay.Text = reader.GetValue(1).ToString();
+                txtbLastNameDisplay.Text = reader.GetValue(2).ToString();
+                txtbAgeDisplay.Text = reader.GetValue(3).ToString();
+                txtbAddressDisplay.Text = reader.GetValue(4).ToString();
+                txtbEmailDisplay.Text = reader.GetValue(5).ToString();
+            }
+
+            conn.Close();
+        }
+    }
+}

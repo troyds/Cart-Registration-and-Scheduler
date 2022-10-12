@@ -1,0 +1,91 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace UserLogin
+{
+    public partial class FrmRegistration : Form
+    {
+        public static FrmRegistration Instance;
+        public Label lblAreadyAccount;
+        public LinkLabel linklaAlreadyAccount;
+
+        SqlConnection conn = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;Initial Catalog=RegistrationDB;Integrated Security=True");
+
+        public FrmRegistration()
+        {
+            InitializeComponent();
+            Instance = this;
+            lblAreadyAccount = lblAlreadyHaveAccount;
+            linklaAlreadyAccount = linklaLogin;
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            Reset();
+        }
+
+        private void Reset()
+        {
+            txtbFirstName.Text = "";
+            txtbLastName.Text = "";
+            txtbAge.Text = "";
+            txtbAddress.Text = "";
+            txtbEmail.Text = "";
+            txtbUsername.Text = "";
+            txtbPassword.Text = "";
+            txtbRetypePassword.Text = "";
+        }
+
+        private void btnRegister_Click(object sender, EventArgs e)
+        {
+            string firstName = txtbFirstName.Text;
+            string lastName = txtbLastName.Text;
+            string age = txtbAge.Text;
+            string address = txtbAddress.Text;
+            string email = txtbEmail.Text;
+            string username = txtbUsername.Text;
+            string password = txtbPassword.Text;
+            string retypePassword = txtbRetypePassword.Text;
+
+            conn.Open();
+
+            //empty field validation
+            if ((firstName.Length != 0) && (lastName.Length != 0) && (age.Length != 0) && (address.Length != 0) && (email.Length != 0) && (username.Length != 0) && (password.Length != 0)) { 
+                
+                if (password == retypePassword) //password validation
+                {
+                    //SqlCommand command = new SqlCommand("INSERT INTO RegistrationTable VALUES ('" + firstName + "','" + lastName + "','" + Convert.ToInt32(age) + "', '" + address + "','" + email + "','" + username + "','" + password + "')", conn);
+                    string query = "INSERT INTO RegistrationTable VALUES ('" + firstName + "','" + lastName + "','" + Convert.ToInt32(age) + "', '" + address + "','" + email + "','" + username + "','" + password + "', NULL, NULL, NULL)";
+                    SqlCommand command = new SqlCommand(query, conn);
+                    command.ExecuteNonQuery();
+                    MessageBox.Show("You are now registered.", "Registration Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Reset();
+                } else
+                {
+                    MessageBox.Show("Password doesn't match. Please retype it.", "Password don't match!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                } //end if for password validation
+                
+            } else
+            {
+                MessageBox.Show("Please fill up empty fields.", "Empty field", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            } //end if for empty field validation
+            
+            conn.Close();
+        }
+
+        private void linklaLogin_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            FrmLogin frmLogin = new FrmLogin();
+            this.Close();
+            frmLogin.Show();
+        }
+    }
+}

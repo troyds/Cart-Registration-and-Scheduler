@@ -1,0 +1,87 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace UserLogin
+{
+    public partial class FrmLogin : Form
+    {
+        public static FrmLogin Instance;
+        public TextBox tbUsername;
+        
+        SqlConnection conn = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;Initial Catalog=RegistrationDB;Integrated Security=True");
+        public string loginUsername, loginPassword;
+        bool userExist;
+
+        public FrmLogin()
+        {
+            InitializeComponent();
+            Instance = this;
+            tbUsername = txtbUsername;
+        }
+
+        private void btnLogin_Click(object sender, EventArgs e)
+        {
+            loginUsername = txtbUsername.Text;
+            loginPassword = txtbPassword.Text;
+            
+            conn.Open();
+
+            string query = "SELECT * FROM RegistrationTable WHERE Username = '" + loginUsername.Trim() + "' and Password = '" + loginPassword.Trim() + "'";
+            SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
+            DataTable dt = new DataTable();
+            adapter.Fill(dt);
+            conn.Close();
+
+            userExist = IsUserExist();
+
+            if (userExist)
+            {
+                if (dt.Rows.Count == 1)
+                {
+                    FrmMain frmMainDashboard = new FrmMain();
+                    MessageBox.Show("Login Successfully!", "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.Hide();
+                    //MessageBox.Show(loginUsername);
+                    frmMainDashboard.Show();
+                } else
+                {
+                    MessageBox.Show("Invalid login detail", "Invalid Login", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            } else
+            {
+                MessageBox.Show("No user found. Please register your account.", "Empty field", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+        }
+
+        private void btnRegister_Click(object sender, EventArgs e)
+        {
+            FrmRegistration frmRegistration = new FrmRegistration();
+            this.Hide();
+            frmRegistration.Show();
+        }
+
+        private bool IsUserExist()
+        {
+            //int userCounter;
+
+            conn.Open();
+            SqlCommand userExist = new SqlCommand("SELECT COUNT(*) FROM RegistrationTable WHERE Username = '"+ loginUsername.Trim()+"'", conn);
+            int userCounter = Convert.ToInt32(userExist.ExecuteScalar());
+            conn.Close();
+
+            if (userCounter == 0)
+                return false;
+            else
+                return true;
+        }
+    }
+}
